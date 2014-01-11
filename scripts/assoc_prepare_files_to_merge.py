@@ -18,28 +18,28 @@ import json
 from process_basics import *
 
 
-srcfilename="BPLAKCIMJEGYZEK_09_1896-1897_egyesuletek.txt"
+srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_egyesuletek.txt"
 
 srcfile = codecs.open(srcfilename,'r', encoding='utf-8', errors='replace')
 
-if 5==5:
-	space_dict=[[u"-utcza", u" utcza", u"-u.", u"-utca"],
-	[u" út", u"-út"],
-	[u"-tér"],
-	[u" körút", u"-körút"],
-	[u"-köz"],
-	[u"sor"],
-	[u" rakpart", u"-rakpart"],
-	[u"-lépcső"]]
 
-	space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri",u"ntcza",u"-ú ",u"-ia",u"-it."],
-	[u"iít",u"-rit",u"-fit",u"-vit",u"-írt",u"-iit",u"-iát",u"-ut",u"-i.t",],
-	[u"téi",u"tér",u"tere",u"-té ",u"-tór"],
-	[u"korut",u"korút",u"körut",u"körüt",u"könít",u"körrit ",u"körfit",u"körvit",u"körú",u"köriit",u"könit",u"kör-lít",u"kör- lít",u"krt"],
-	[u"-koz"],
-	[u"-sör"],
-	[u"rakp",u"rak- part",u"rakn.",u"-rpt",u"rkp",u"ratp",u"-rp."],
-	[u"-lpcsso"]]
+space_dict=[[u"-utcza", u" utcza", u"-u.", u"-utca"],
+[u" út", u"-út"],
+[u"-tér"],
+[u" körút", u"-körút"],
+[u"-köz"],
+[u"sor"],
+[u" rakpart", u"-rakpart"],
+[u"-lépcső"]]
+
+space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri",u"ntcza",u"-ú ",u"-ia",u"-it."],
+[u"iít",u"-rit",u"-fit",u"-vit",u"-írt",u"-iit",u"-iát",u"-ut",u"-i.t",],
+[u"téi",u"tér",u"tere",u"-té ",u"-tór"],
+[u"korut",u"korút",u"körut",u"körüt",u"könít",u"körrit ",u"körfit",u"körvit",u"körú",u"köriit",u"könit",u"kör-lít",u"kör- lít",u"krt"],
+[u"-koz"],
+[u"-sör"],
+[u"rakp",u"rak- part",u"rakn.",u"-rpt",u"rkp",u"ratp",u"-rp."],
+[u"-lpcsso"]]
 
 
 spacestubs=[u"utcza", u"út",u"tér",u"körút",u"koz",u"köz",u"u.",u"n.",u"irtcza",u"a.",u"ufeza",u"ntcza",u"it.",u"téi",u"-tór",u"korut",u"korút",u"körut",u"körüt",u"könít",u"körrit ",u"körfit",u"körvit",u"körú",u"köriit",u"könit",u"kör-lít",u"kör- lít",u"krt"]
