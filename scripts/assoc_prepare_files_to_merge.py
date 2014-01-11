@@ -152,11 +152,11 @@ for i in range(len(masterlist)):
 	assnames=assnames+[assn]
 
 
-outfile=codecs.open("out.txt",'w', encoding='utf-8', errors='replace')
+outfile=codecs.open("../out/out.txt",'w', encoding='utf-8', errors='replace')
 
-outfile2=codecs.open("assoc_csv_master.txt",'w', encoding='utf-8', errors='replace')
+outfile2=codecs.open("../out/assoc_csv_master.txt",'w', encoding='utf-8', errors='replace')
 outfile2.write("associd,assocname,fullname,nkey1,nkey2\n")
-outfile3=codecs.open("assoc_csv_using.txt",'w', encoding='utf-8', errors='replace')
+outfile3=codecs.open("../out/assoc_csv_using.txt",'w', encoding='utf-8', errors='replace')
 outfile3.write("person,personname,nkey1,nkey2,ad1,ad2,ad3,ad4\n")
 
 allnames=[]
@@ -183,7 +183,7 @@ print "number of surnames: ",len(allnames)
 #reading names
 
 dest_people=[]
-namesrc=codecs.open("paired_test.txt",'r', encoding='utf-8', errors='replace')
+namesrc=codecs.open("../in/paired_test.txt",'r', encoding='utf-8', errors='replace')
 for namelines in namesrc:
 	nl = namelines.split("\n")[0].split(",")
 
