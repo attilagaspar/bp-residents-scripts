@@ -10,7 +10,7 @@ from msvcrt import getch
 import difflib
 import signal
 from math import floor
-from fuzzywuzzy import fuzz
+#from fuzzywuzzy import fuzz
 import operator
 import msvcrt
 import json

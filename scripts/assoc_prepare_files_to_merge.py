@@ -16,6 +16,7 @@ import msvcrt
 import json
 
 from process_basics import *
+from process_geo import *
 
 
 srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_egyesuletek.txt"
@@ -45,16 +46,11 @@ space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri"
 spacestubs=[u"utcza", u"út",u"tér",u"körút",u"koz",u"köz",u"u.",u"n.",u"irtcza",u"a.",u"ufeza",u"ntcza",u"it.",u"téi",u"-tór",u"korut",u"korút",u"körut",u"körüt",u"könít",u"körrit ",u"körfit",u"körvit",u"körú",u"köriit",u"könit",u"kör-lít",u"kör- lít",u"krt"]
 
 lines=srcfile.readlines()
-#lines = []
 
-#for line in srcfile:
-#	l=u""
-#	for chars in line:
-#		try:
-#			l=l+chars.encode("utf-8")	
-#		except:
-#			pass
-#	lines = lines+[l]
+print "number of lines in source text: ",len(lines)
+
+
+
 
 #******************
 #STEP 0
@@ -80,9 +76,10 @@ for i in range(len(lines)):
 
 hist=[0]*90
 for i in range(len(lines1)):
+
 	hist[len(lines1[i])]=hist[len(lines1[i])]+1
 
-histfile=codecs.open("hist.txt",'w', encoding='utf-8', errors='replace')
+histfile=codecs.open("../out/hist.txt",'w', encoding='utf-8', errors='replace')
 for i in range(len(hist)):
 	histfile.write(str(i)+","+str(hist[i])+"\n")
 
@@ -125,9 +122,38 @@ mstr=[]
 nms=[]
 mnames=[]
 assnames=[]
+assaddrs=[]
 for i in range(len(masterlist)):
 	mstr=mstr+["".join(masterlist[i])]
 	mstr[i]=u" ".join(mstr[i].split())
+
+	#################
+	#go for addresses
+	#################
+	tocheck=mstr[i].split(".")
+	addr_found_at=-1
+	for j in range(len(tocheck)):
+		tocheck_inside=tocheck[j].split(",")[-1]
+		print unikill(kill_accents(tocheck_inside))
+		[ptype,pname]=check_if_place(tocheck_inside)
+		if ptype!=-1:
+			addr=pname+"/"+space_dict[ptype][0]
+			assaddrs=assaddrs+[addr]
+			addr_found_at=j
+			print addr	
+			tocheck[j]=",".join(tocheck[j].split(",")[:-1])
+		else:
+			assaddrs=assaddrs+["NONE"]
+	#if addr_found_at>-1:
+
+	#	tocheck[j]=tocheck
+		#tocheck.pop(j)
+		#tocheck.pop(j-1)
+
+	mstr[i]=".".join(tocheck)
+
+	#print mstr[i].encode("utf-8")
+	#print assaddrs[i].encode("utf-8")
 	#names=re.findall(u"([A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú.]+)+", mstr[i], flags=0)
 
 	#duplanevek 
@@ -155,7 +181,7 @@ for i in range(len(masterlist)):
 outfile=codecs.open("../out/out.txt",'w', encoding='utf-8', errors='replace')
 
 outfile2=codecs.open("../out/assoc_csv_master.txt",'w', encoding='utf-8', errors='replace')
-outfile2.write("associd,assocname,fullname,nkey1,nkey2\n")
+outfile2.write("associd,assocname,assocaddr,fullname,nkey1,nkey2\n")
 outfile3=codecs.open("../out/assoc_csv_using.txt",'w', encoding='utf-8', errors='replace')
 outfile3.write("person,personname,nkey1,nkey2,ad1,ad2,ad3,ad4\n")
 
@@ -169,7 +195,7 @@ for i in range(len(nms)):
 			allnames=allnames+[japanize(mnames[i][j].split()[0])]
 		src_people=src_people+[src_people_unit]
 		lwrcase=kill_accents(mnames[i][j]).split()
-		person=",".join([str(i), assnames[i], mnames[i][j]]+lwrcase)+"\n"
+		person=",".join([str(i), assnames[i], assaddrs[i], mnames[i][j]]+lwrcase)+"\n"
 		outfile2.write(person.encode("utf-8").decode("utf-8"))
 
 for i in range(len(masterlist)):
