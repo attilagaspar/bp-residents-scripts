@@ -130,27 +130,36 @@ for i in range(len(masterlist)):
 	#################
 	#go for addresses
 	#################
-	tocheck=mstr[i].split(".")
-	addr_found_at=-1
-	for j in range(len(tocheck)):
-		tocheck_inside=tocheck[j].split(",")[-1]
-		print unikill(kill_accents(tocheck_inside))
-		[ptype,pname]=check_if_place(tocheck_inside)
+	
+	#addrs=re.findall(r"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\— ])+\. +(\d)+([0-9-—])*)",mstr[i],flags=0)
+	addrs=re.findall(ur"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\— ])+\.* *(\d)+([0-9\-\—])*)",mstr[i],flags=0)
+	#print addrs
+	adrfound=0
+	for j in range(len(addrs)):
+		if type(addrs[j])==tuple:
+			addrs[j]=addrs[j][0]
+		#print(unikill(kill_accents(addrs[j])))
+		[ptype,pname]=check_if_place(" ".join(addrs[j].split()[:-1]))
+
 		if ptype!=-1:
-			addr=pname+"/"+space_dict[ptype][0]
-			assaddrs=assaddrs+[addr]
-			addr_found_at=j
-			print addr	
-			tocheck[j]=",".join(tocheck[j].split(",")[:-1])
-		else:
-			assaddrs=assaddrs+["NONE"]
+			if adrfound==0:
+				addr=pname+"-"+space_dict[ptype][0]
+				assaddrs=assaddrs+[addr]
+				adrfound==1
+	if adrfound==0:
+		if len(addrs)>0:
+			print(unikill(kill_accents(addrs[0])))
+		assaddrs=assaddrs+["NONE"]
+
+
+			
 	#if addr_found_at>-1:
 
 	#	tocheck[j]=tocheck
 		#tocheck.pop(j)
 		#tocheck.pop(j-1)
 
-	mstr[i]=".".join(tocheck)
+	
 
 	#print mstr[i].encode("utf-8")
 	#print assaddrs[i].encode("utf-8")
