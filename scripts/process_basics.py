@@ -142,6 +142,7 @@ def repair(str1):
 
 def japanize(str1):
 	str2=unikill(kill_accents(str1))
+	str2=str2.split("\n")[0]
 
 	todel=["sch","th", "gh", "hr", "ndtn", "ch", "cs", "ts", "eo", "w", "zs", "sz", "hn", "cz", "tz", "ck"]
 	toput=["s"	,"t" , "g" , "r" , "ntn" , "c" , "c" , "c", "o",   "v", "z" , "s",  "n",  "c",  "c",  "k"]
@@ -175,16 +176,17 @@ def japanize(str1):
 	str4=""
 
 	if len(str3)>1:
-		if str3[-1]=="y":
+		if str3[-1]=="y" and str3[-2]!="l":
 			str4=str3[:-1]+"i"
 		else:
 			str4=str3
-	if len(str3)>2:
+	elif len(str3)>2:
 		if str3[-1]=="v" and str3[-2]!="o":
 			str4=str3[:-1]+"i"
 		else:
 			str4=str3
-
+	else:
+		str4=str3
 	#print str2, unikill(str1)
 
 	return str4

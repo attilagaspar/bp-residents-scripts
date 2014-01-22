@@ -126,31 +126,54 @@ assaddrs=[]
 for i in range(len(masterlist)):
 	mstr=mstr+["".join(masterlist[i])]
 	mstr[i]=u" ".join(mstr[i].split())
-
+	assaddrs=assaddrs+["NONE"]
 	#################
 	#go for addresses
 	#################
-	
+	# A T)MBSZERKEZET VAN ELBASZVA NEM A KÓD!!!!
+
 	#addrs=re.findall(r"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\— ])+\. +(\d)+([0-9-—])*)",mstr[i],flags=0)
+	#print unikill(kill_accents(mstr[i]))
 	addrs=re.findall(ur"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\— ])+\.* *(\d)+([0-9\-\—])*)",mstr[i],flags=0)
 	#print addrs
+	#regexps are found from the back, we are interested in primary addresses
+	addrs.reverse()
 	adrfound=0
+	adrlistlen_prev=len(assaddrs)
 	for j in range(len(addrs)):
 		if type(addrs[j])==tuple:
 			addrs[j]=addrs[j][0]
+		
 		#print(unikill(kill_accents(addrs[j])))
-		[ptype,pname]=check_if_place(" ".join(addrs[j].split()[:-1]))
+		#print(unikill(kill_accents(addrs[0])))
+		if adrfound==0:
+			if type(addrs[j])!=list:
+				#print "geci"
+				[ptype,pname]=check_if_place(" ".join(addrs[j].split()[:-1]))
+				#print (unikill(kill_accents(addrs[j]))),(unikill(kill_accents(str(ptype)))),(unikill(kill_accents(pname)))
+				if ptype!=-1:		
+						#addr=pname+"-"+space_dict[ptype][0]
+						addr=addrs[j]
+						assaddrs[-1]=addr
+						adrfound==1
+			else:
+				#print "punci"
+				for z in range(len(addrs[j])):
+					[ptype,pname]=check_if_place(" ".join(addrs[j][z].split()[:-1]))
+					#print (unikill(kill_accents(addrs[j]))),(unikill(kill_accents(str(ptype)))),(unikill(kill_accents(pname)))
+					if ptype!=-1 and adrfound!=1:		
+						#addr=pname+"-"+space_dict[ptype][0]
+						addr=addrs[j][z]
+						assaddrs[-1]=addr
+						adrfound==1
+	
+		
 
-		if ptype!=-1:
-			if adrfound==0:
-				addr=pname+"-"+space_dict[ptype][0]
-				assaddrs=assaddrs+[addr]
-				adrfound==1
-	if adrfound==0:
-		if len(addrs)>0:
-			print(unikill(kill_accents(addrs[0])))
-		assaddrs=assaddrs+["NONE"]
-
+	adrlistlen_post=len(assaddrs)
+	increment = adrlistlen_post-adrlistlen_prev
+	#if increment!=1:
+		#print unikill(kill_accents(mstr[i])), "   inc:  ", increment
+	#assert adrlistlen_post==adrlistlen_prev+1
 
 			
 	#if addr_found_at>-1:
@@ -174,25 +197,70 @@ for i in range(len(masterlist)):
 	#szimplanevek 
 	names2=re.findall(u"([A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú]+ [A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú]*)", mstr[i], flags=0)
 
+	names=["noname"]
+	if len(names1)>0 or len(names2)>0:
+		names=names1+names2
 
-	names=names1+names2
+	#If the association is in "Kossuth Lajos street", it will find "Kossuth Lajos" as a person participating, unless...
+	newnames=[]
+	for zz in range(len(addrs)):
+		for z in range(len(names)):
+			if names[z] not in addrs[zz]:
+				newnames=newnames+[names[z]]
+	names=newnames
+			
 
 	#print names
 	nms=nms+[",".join(names)+"\n"]
-	mnames=mnames+[names]
+	
 
-	#association names
-	assn=re.findall(u"^[^,.]+",mstr[i],flags=0)[0][:-1]
+	mnames=mnames+[names]
+	
+
+	#association names are cut from the string
+	if assaddrs[-1]!='NONE':
+		#if there were multiple address matches, we need to find the first one
+		#baseline
+		adpos=mstr[i].find(assaddrs[-1])
+		if len(addrs)>1:
+			#print "nuni"
+			for y in range(len(addrs)):
+				#print unikill(kill_accents(addrs[y]))
+				if addrs[y] in mstr[i]:
+					if mstr[i].find(addrs[y])<adpos:
+						adpos=mstr[i].find(addrs[y])
+
+		#association name goes till the address
+		assn=mstr[i][:adpos]
+		print japanize(assn)
+	else:
+		assn=re.findall(u"^[^,.]+",mstr[i],flags=0)[0][:-1]
 	#print assn.encode("utf-8")
+
+	#commas in association names mess up the CSV. let's get rid of them.
+	assn=" ".join(assn.split(","))
+	#let's get rid of extra spaces as well
+	assn=" ".join(assn.split())
 	assnames=assnames+[assn]
 
+#assert len(assaddrs)==len(assnames)
 
 outfile=codecs.open("../out/out.txt",'w', encoding='utf-8', errors='replace')
+outfilex=codecs.open("../out/assadrs.txt",'w', encoding='utf-8', errors='replace')
+outfiley=codecs.open("../out/assnames.txt",'w', encoding='utf-8', errors='replace')
+outfilez=codecs.open("../out/master.txt",'w', encoding='utf-8', errors='replace')
+for x in range(len(assaddrs)):
+	outfilex.write(assaddrs[x]+"\n")
+for x in range(len(assnames)):
+	outfiley.write(assnames[x]+"\n")
+for x in range(len(mstr)):
+	outfilez.write(mstr[x]+"\n")
+
 
 outfile2=codecs.open("../out/assoc_csv_master.txt",'w', encoding='utf-8', errors='replace')
-outfile2.write("associd,assocname,assocaddr,fullname,nkey1,nkey2\n")
+outfile2.write("associd,assocname,assocaddr,fullname,nkey1,nkey2,jap1,jap2\n")
 outfile3=codecs.open("../out/assoc_csv_using.txt",'w', encoding='utf-8', errors='replace')
-outfile3.write("person,personname,nkey1,nkey2,ad1,ad2,ad3,ad4\n")
+outfile3.write("person,personname,nkey1,nkey2,jap1,jap2,ad1,ad2,ad3,ad4\n")
 
 allnames=[]
 
@@ -204,7 +272,13 @@ for i in range(len(nms)):
 			allnames=allnames+[japanize(mnames[i][j].split()[0])]
 		src_people=src_people+[src_people_unit]
 		lwrcase=kill_accents(mnames[i][j]).split()
-		person=",".join([str(i), assnames[i], assaddrs[i], mnames[i][j]]+lwrcase)+"\n"
+		jap2=[]
+		for z in mnames[i][j].split():
+			jap2=jap2+[japanize(z)]
+			#print jap2[-1]
+			#assert japanize(z)[-1]!="y"
+		
+		person=",".join([str(i), assnames[i], assaddrs[i], mnames[i][j]]+lwrcase[0:2]+jap2[0:2])+"\n"
 		outfile2.write(person.encode("utf-8").decode("utf-8"))
 
 for i in range(len(masterlist)):
@@ -224,6 +298,9 @@ for namelines in namesrc:
 
 	nkeys=[""]*2
 	nk=kill_accents(nl[1]).split()
+	nkjap=[]
+	for z in nl[1].split():
+		nkjap=nkjap+[japanize(z)]
 	try:
 		nkeys[0]=nk[0]
 		nkeys[1]=nk[1]
@@ -231,7 +308,7 @@ for namelines in namesrc:
 		pass
 
 	
-	nlint = [nl[0]]+[nl[1]]+nk+nl[11:15]
+	nlint = [nl[0]]+[nl[1]]+nk[0:2]+nkjap[0:2]+nl[11:15]
 	#if japanize(nlint[1]) in allnames:
 	#	dest_people=dest_people+[nlint]
 	#dest_people=dest_people+[nlint]
