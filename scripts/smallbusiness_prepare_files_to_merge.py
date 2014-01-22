@@ -19,11 +19,12 @@ from process_basics import *
 from process_geo import *
 
 
-srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_cegek.txt"
+srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_cegek_kicsi.txt"
 
 srcfile = codecs.open(srcfilename,'r', encoding='utf-8', errors='replace')
 
 
+#these are the names and abbreviations of types of public spaces in Hungarian. (e.g. Street and Str, Square and Sqr. These will help us identify addresses)
 space_dict=[[u"-utcza", u" utcza", u"-u.", u"-utca"],
 [u" út", u"-út"],
 [u"-tér"],
@@ -32,7 +33,6 @@ space_dict=[[u"-utcza", u" utcza", u"-u.", u"-utca"],
 [u"sor"],
 [u" rakpart", u"-rakpart"],
 [u"-lépcső"]]
-
 space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri",u"ntcza",u"-ú ",u"-ia",u"-it."],
 [u"iít",u"-rit",u"-fit",u"-vit",u"-írt",u"-iit",u"-iát",u"-ut",u"-i.t",],
 [u"téi",u"tér",u"tere",u"-té ",u"-tór"],
@@ -41,9 +41,10 @@ space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri"
 [u"-sör"],
 [u"rakp",u"rak- part",u"rakn.",u"-rpt",u"rkp",u"ratp",u"-rp."],
 [u"-lpcsso"]]
-
-
 spacestubs=[u"utcza", u"út",u"tér",u"körút",u"koz",u"köz",u"u.",u"n.",u"irtcza",u"a.",u"ufeza",u"ntcza",u"it.",u"téi",u"-tór",u"korut",u"korút",u"körut",u"körüt",u"könít",u"körrit ",u"körfit",u"körvit",u"körú",u"köriit",u"könit",u"kör-lít",u"kör- lít",u"krt"]
+
+#if a line starts with one of these characters, that's just some OCR error due to filthy paper
+nonstarterlist=[".","^", "="]
 
 lines=srcfile.readlines()
 
@@ -74,62 +75,31 @@ for i in range(len(lines)):
 	if lines[i]!="":
 		lines1=lines1+[lines[i]]
 
-
+lines=lines1
 #*********************
 #STEP 1
 #*********************
-cutoff=54
+#get one continuous string
 
-masterlist=[]
-mlcurr=0
-sublist=[]
-for i in range(len(lines1)):
-	if len(lines1[i])>cutoff:
-		sublist=sublist+[lines1[i]]
-	else:
-		sublist=sublist+[lines1[i]]
-		masterlist=masterlist+[sublist]
-		#print len(masterlist[-1])
-		sublist=[]
-
-
-#print "master",len(masterlist)
-
-#***********************
-#STEP 2
-#***********************
-
-
-for i in range(len(masterlist)):
-	for j in range(len(masterlist[i])):
-		if j<len(masterlist[i])-1:
-			#masterlist[i][j]=masterlist[i][j].split("\n")[0]
-			masterlist[i][j]=masterlist[i][j].rstrip()
-			if masterlist[i][j][-1]=="-" and  masterlist[i][j+1].split()[0] not in spacestubs:
-				masterlist[i][j]=masterlist[i][j][:-1]
-#				masterlist[i][j]=masterlist[i][j].split(u"\n")[0]
-				
+rng=len(lines)
+for i in range(0,rng):
+	#if line is cut at address
+	if i<len(lines)-2 and lines[i+1].split()[0] in spacestubs:
+		lines[i]=lines[i].split("\n")[0]+lines.pop(i+1)
+	#if line ends with "-"
 
 mstr=[]
 nms=[]
 mnames=[]
 assnames=[]
 assaddrs=[]
-for i in range(len(masterlist)):
-	mstr=mstr+["".join(masterlist[i])]
-	mstr[i]=u" ".join(mstr[i].split())
-	assaddrs=assaddrs+["NONE"]
-	#################
-	#go for addresses
-	#################
-	# A T)MBSZERKEZET VAN ELBASZVA NEM A KÓD!!!!
 
-	#addrs=re.findall(r"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\— ])+\. +(\d)+([0-9-—])*)",mstr[i],flags=0)
-	#print unikill(kill_accents(mstr[i]))
-	addrs=re.findall(ur"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\— ])+\.* *(\d)+([0-9\-\—])*)",mstr[i],flags=0)
-	#print addrs
-	#regexps are found from the back, we are interested in primary addresses
+lastline=""
+for i in range(len(lines)):
+	this=lines[i].split("\n")[0]
+	addrs=re.findall(ur"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\— ])+\.* *(\d)+([0-9\-\—])*)",this,flags=0)
 	addrs.reverse()
+	#print len(addrs)	
 	adrfound=0
 	adrlistlen_prev=len(assaddrs)
 	for j in range(len(addrs)):
@@ -139,15 +109,18 @@ for i in range(len(masterlist)):
 		#print(unikill(kill_accents(addrs[j])))
 		#print(unikill(kill_accents(addrs[0])))
 		if adrfound==0:
+			#print "puncsa"
 			if type(addrs[j])!=list:
 				#print "geci"
 				[ptype,pname]=check_if_place(" ".join(addrs[j].split()[:-1]))
 				#print (unikill(kill_accents(addrs[j]))),(unikill(kill_accents(str(ptype)))),(unikill(kill_accents(pname)))
 				if ptype!=-1:		
+						#print "trololo"
 						#addr=pname+"-"+space_dict[ptype][0]
 						addr=addrs[j]
-						assaddrs[-1]=addr
-						adrfound==1
+						#print unikill(kill_accents(addr))
+						assaddrs=assaddrs+[addr]
+						adrfound=1
 			else:
 				#print "punci"
 				for z in range(len(addrs[j])):
@@ -156,32 +129,33 @@ for i in range(len(masterlist)):
 					if ptype!=-1 and adrfound!=1:		
 						#addr=pname+"-"+space_dict[ptype][0]
 						addr=addrs[j][z]
-						assaddrs[-1]=addr
-						adrfound==1
+						assaddrs=assaddrs+[addr]
+						adrfound=1
+	if adrfound==1:
+		#print "cigan"
+		adrpos=this.find(assaddrs[-1])
+		lastline=lastline+this[:adrpos]
+		mstr=mstr+[lastline]
+		#print "assert: ",len(mstr),len(assaddrs)
+		lastline=""
+	else:
+		lastline=lastline+this
 	
-		
+assert len(mstr)==len(assaddrs)
+print "parallel list length assertion ok"
 
-	adrlistlen_post=len(assaddrs)
-	increment = adrlistlen_post-adrlistlen_prev
-	#if increment!=1:
-		#print unikill(kill_accents(mstr[i])), "   inc:  ", increment
-	#assert adrlistlen_post==adrlistlen_prev+1
+mnames=[]
+nms=[]
+assnames=[]
 
-			
-	#if addr_found_at>-1:
+#FOLYTASD ITT: KI KELL IRNI A MASTER LISTA SORAIT
 
-	#	tocheck[j]=tocheck
-		#tocheck.pop(j)
-		#tocheck.pop(j-1)
-
+for i in range(len(mstr)):
 	
-
-	#print mstr[i].encode("utf-8")
-	#print assaddrs[i].encode("utf-8")
-	#names=re.findall(u"([A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú.]+)+", mstr[i], flags=0)
 
 	#duplanevek 
 	names1=re.findall(u"([A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú]+[A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú]*)", mstr[i], flags=0)
+
 	for x in range(len(names1)):
 		y=re.findall(u"([A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú]+)", names1[x], flags=0)
 		names1[x]=" ".join(y)
@@ -192,6 +166,9 @@ for i in range(len(masterlist)):
 	names=["noname"]
 	if len(names1)>0 or len(names2)>0:
 		names=names1+names2
+		for y in range(len(names)):
+			print unikill(kill_accents(names[y]))
+
 
 	#If the association is in "Kossuth Lajos street", it will find "Kossuth Lajos" as a person participating, unless...
 	newnames=[]
@@ -200,7 +177,7 @@ for i in range(len(masterlist)):
 			if names[z] not in addrs[zz]:
 				newnames=newnames+[names[z]]
 	names=newnames
-			
+	#print len(names)	
 
 	#print names
 	nms=nms+[",".join(names)+"\n"]
@@ -209,30 +186,13 @@ for i in range(len(masterlist)):
 	mnames=mnames+[names]
 	
 
-	#association names are cut from the string
-	if assaddrs[-1]!='NONE':
-		#if there were multiple address matches, we need to find the first one
-		#baseline
-		adpos=mstr[i].find(assaddrs[-1])
-		if len(addrs)>1:
-			#print "nuni"
-			for y in range(len(addrs)):
-				#print unikill(kill_accents(addrs[y]))
-				if addrs[y] in mstr[i]:
-					if mstr[i].find(addrs[y])<adpos:
-						adpos=mstr[i].find(addrs[y])
-
-		#association name goes till the address
-		assn=mstr[i][:adpos]
-		print japanize(assn)
-	else:
-		assn=re.findall(u"^[^,.]+",mstr[i],flags=0)[0][:-1]
-	#print assn.encode("utf-8")
-
+	#small businesses often don't have a name so for the time being we call them on their full name
+	
 	#commas in association names mess up the CSV. let's get rid of them.
-	assn=" ".join(assn.split(","))
+	assn=" ".join(mstr[i].split(","))
 	#let's get rid of extra spaces as well
 	assn=" ".join(assn.split())
+	#print unikill(kill_accents(assn))
 	assnames=assnames+[assn]
 
 #assert len(assaddrs)==len(assnames)
@@ -251,8 +211,7 @@ for x in range(len(mstr)):
 
 outfile2=codecs.open("../out/business_csv_master.txt",'w', encoding='utf-8', errors='replace')
 outfile2.write("associd,assocname,assocaddr,fullname,nkey1,nkey2,jap1,jap2\n")
-outfile3=codecs.open("../out/assoc_csv_using.txt",'w', encoding='utf-8', errors='replace')
-outfile3.write("person,personname,nkey1,nkey2,jap1,jap2,ad1,ad2,ad3,ad4\n")
+
 
 allnames=[]
 
@@ -273,7 +232,7 @@ for i in range(len(nms)):
 		person=",".join([str(i), assnames[i], assaddrs[i], mnames[i][j]]+lwrcase[0:2]+jap2[0:2])+"\n"
 		outfile2.write(person.encode("utf-8").decode("utf-8"))
 
-for i in range(len(masterlist)):
+for i in range(len(mstr)):
 	outfile.write("\n")
 	outfile.write("\n")
 	outfile.write(mstr[i].encode("utf-8").decode("utf-8"))
@@ -281,57 +240,3 @@ for i in range(len(masterlist)):
 print "master data ready"
 print "number of surnames: ",len(allnames)
 
-#reading names
-
-dest_people=[]
-namesrc=codecs.open("../in/paired_test.txt",'r', encoding='utf-8', errors='replace')
-for namelines in namesrc:
-	nl = namelines.split("\n")[0].split(",")
-
-	nkeys=[""]*2
-	nk=kill_accents(nl[1]).split()
-	nkjap=[]
-	for z in nl[1].split():
-		nkjap=nkjap+[japanize(z)]
-	try:
-		nkeys[0]=nk[0]
-		nkeys[1]=nk[1]
-	except:
-		pass
-
-	
-	nlint = [nl[0]]+[nl[1]]+nk[0:2]+nkjap[0:2]+nl[11:15]
-	#if japanize(nlint[1]) in allnames:
-	#	dest_people=dest_people+[nlint]
-	#dest_people=dest_people+[nlint]
-	outfile3.write(",".join(nlint)+"\n")
-
-
-print "using data ready"
-#print "number of candidates:",len(dest_people)
-
-#for i in range(len(src_people)):
-#	if i%100==0:
-#		print i
-#	last=src_people[i][2].split()[0]
-#	first=src_people[i][2].split()[1]
-#	cands=[]
-#	for j in range(len(dest_people)):
-#		if japanize(last)==japanize(dest_people[j][1]):
-#			cands=cands+[dest_people[j]]
-#	if len(cands)!=0:
-#		sim=[]
-#		for j in range(len(cands)):
-#			sim=sim+[difflib.SequenceMatcher(None,first,cands[j][2]).ratio()]
-#	
-#		bestindex=sim.index(max(sim))
-#		src_people[i]=src_people[i]+cands[bestindex]
-#	else:
-#		src_people[i]=src_people[i]+["fail"]
-#	outfile3.write(",".join(src_people[i]).encode("utf-8").decode("utf-8")+"\n")
-
-
-
-
-
-#nevsorok: id, vezetek, kereszt, cimkodok

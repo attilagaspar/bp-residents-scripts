@@ -19,11 +19,12 @@ from process_basics import *
 from process_geo import *
 
 
-srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_cegek.txt"
+srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_cegek_kicsi.txt"
 
 srcfile = codecs.open(srcfilename,'r', encoding='utf-8', errors='replace')
 
 
+#these are the names and abbreviations of types of public spaces in Hungarian. (e.g. Street and Str, Square and Sqr. These will help us identify addresses)
 space_dict=[[u"-utcza", u" utcza", u"-u.", u"-utca"],
 [u" út", u"-út"],
 [u"-tér"],
@@ -32,7 +33,6 @@ space_dict=[[u"-utcza", u" utcza", u"-u.", u"-utca"],
 [u"sor"],
 [u" rakpart", u"-rakpart"],
 [u"-lépcső"]]
-
 space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri",u"ntcza",u"-ú ",u"-ia",u"-it."],
 [u"iít",u"-rit",u"-fit",u"-vit",u"-írt",u"-iit",u"-iát",u"-ut",u"-i.t",],
 [u"téi",u"tér",u"tere",u"-té ",u"-tór"],
@@ -41,9 +41,10 @@ space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri"
 [u"-sör"],
 [u"rakp",u"rak- part",u"rakn.",u"-rpt",u"rkp",u"ratp",u"-rp."],
 [u"-lpcsso"]]
-
-
 spacestubs=[u"utcza", u"út",u"tér",u"körút",u"koz",u"köz",u"u.",u"n.",u"irtcza",u"a.",u"ufeza",u"ntcza",u"it.",u"téi",u"-tór",u"korut",u"korút",u"körut",u"körüt",u"könít",u"körrit ",u"körfit",u"körvit",u"körú",u"köriit",u"könit",u"kör-lít",u"kör- lít",u"krt"]
+
+#if a line starts with one of these characters, that's just some OCR error due to filthy paper
+nonstarterlist=[".","^", "="]
 
 lines=srcfile.readlines()
 
@@ -78,7 +79,11 @@ for i in range(len(lines)):
 #*********************
 #STEP 1
 #*********************
-cutoff=54
+#WHICH LINE LENGTH INDICATES A NEW OBSERVATION
+cutoff=60
+#50 for big business (very long lines)
+#54 for associations (medium lines)
+#60 for small business (very short lines)
 
 masterlist=[]
 mlcurr=0
@@ -118,6 +123,8 @@ assaddrs=[]
 for i in range(len(masterlist)):
 	mstr=mstr+["".join(masterlist[i])]
 	mstr[i]=u" ".join(mstr[i].split())
+	if mstr[i][0] in nonstarterlist:
+		mstr[i]=mstr[i][1:]
 	assaddrs=assaddrs+["NONE"]
 	#################
 	#go for addresses
@@ -210,29 +217,29 @@ for i in range(len(masterlist)):
 	
 
 	#association names are cut from the string
-	if assaddrs[-1]!='NONE':
-		#if there were multiple address matches, we need to find the first one
-		#baseline
-		adpos=mstr[i].find(assaddrs[-1])
-		if len(addrs)>1:
-			#print "nuni"
-			for y in range(len(addrs)):
-				#print unikill(kill_accents(addrs[y]))
-				if addrs[y] in mstr[i]:
-					if mstr[i].find(addrs[y])<adpos:
-						adpos=mstr[i].find(addrs[y])
+	#to the first dot where the word before the dot is longer than 3 chars
 
-		#association name goes till the address
-		assn=mstr[i][:adpos]
-		print japanize(assn)
-	else:
-		assn=re.findall(u"^[^,.]+",mstr[i],flags=0)[0][:-1]
-	#print assn.encode("utf-8")
-
+	assname_elements=mstr[i].split('.')
+	#print unikill(kill_accents(mstr[i]))
+	endpos=0
+	if len(assname_elements)>1:
+		for z in range(len(assname_elements)):
+			#print len(assname_elements),z,len(assname_elements[z].split())
+			if len(assname_elements[z].split())>1:
+				checkword=assname_elements[z].split()[-1]
+			else:
+				checkword=assname_elements[z]
+			if len(checkword)>3:
+				endpos=z
+	if endpos==0:
+		endpos=3
+	assn=".".join(assname_elements[:endpos])
+		
 	#commas in association names mess up the CSV. let's get rid of them.
 	assn=" ".join(assn.split(","))
 	#let's get rid of extra spaces as well
 	assn=" ".join(assn.split())
+	#print unikill(kill_accents(assn))
 	assnames=assnames+[assn]
 
 #assert len(assaddrs)==len(assnames)
@@ -251,8 +258,7 @@ for x in range(len(mstr)):
 
 outfile2=codecs.open("../out/business_csv_master.txt",'w', encoding='utf-8', errors='replace')
 outfile2.write("associd,assocname,assocaddr,fullname,nkey1,nkey2,jap1,jap2\n")
-outfile3=codecs.open("../out/assoc_csv_using.txt",'w', encoding='utf-8', errors='replace')
-outfile3.write("person,personname,nkey1,nkey2,jap1,jap2,ad1,ad2,ad3,ad4\n")
+
 
 allnames=[]
 
@@ -281,57 +287,3 @@ for i in range(len(masterlist)):
 print "master data ready"
 print "number of surnames: ",len(allnames)
 
-#reading names
-
-dest_people=[]
-namesrc=codecs.open("../in/paired_test.txt",'r', encoding='utf-8', errors='replace')
-for namelines in namesrc:
-	nl = namelines.split("\n")[0].split(",")
-
-	nkeys=[""]*2
-	nk=kill_accents(nl[1]).split()
-	nkjap=[]
-	for z in nl[1].split():
-		nkjap=nkjap+[japanize(z)]
-	try:
-		nkeys[0]=nk[0]
-		nkeys[1]=nk[1]
-	except:
-		pass
-
-	
-	nlint = [nl[0]]+[nl[1]]+nk[0:2]+nkjap[0:2]+nl[11:15]
-	#if japanize(nlint[1]) in allnames:
-	#	dest_people=dest_people+[nlint]
-	#dest_people=dest_people+[nlint]
-	outfile3.write(",".join(nlint)+"\n")
-
-
-print "using data ready"
-#print "number of candidates:",len(dest_people)
-
-#for i in range(len(src_people)):
-#	if i%100==0:
-#		print i
-#	last=src_people[i][2].split()[0]
-#	first=src_people[i][2].split()[1]
-#	cands=[]
-#	for j in range(len(dest_people)):
-#		if japanize(last)==japanize(dest_people[j][1]):
-#			cands=cands+[dest_people[j]]
-#	if len(cands)!=0:
-#		sim=[]
-#		for j in range(len(cands)):
-#			sim=sim+[difflib.SequenceMatcher(None,first,cands[j][2]).ratio()]
-#	
-#		bestindex=sim.index(max(sim))
-#		src_people[i]=src_people[i]+cands[bestindex]
-#	else:
-#		src_people[i]=src_people[i]+["fail"]
-#	outfile3.write(",".join(src_people[i]).encode("utf-8").decode("utf-8")+"\n")
-
-
-
-
-
-#nevsorok: id, vezetek, kereszt, cimkodok
