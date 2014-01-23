@@ -33,10 +33,10 @@ space_dict=[[u"-utcza", u" utcza", u"-u.", u"-utca"],
 [u"sor"],
 [u" rakpart", u"-rakpart"],
 [u"-lépcső"]]
-space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri",u"ntcza",u"-ú ",u"-ia",u"-it."],
-[u"iít",u"-rit",u"-fit",u"-vit",u"-írt",u"-iit",u"-iát",u"-ut",u"-i.t",],
+space_errors=[[u"-u",u"-u",u"-n.",u"irtcza",u"-a.",u" u ",u"ufeza",u"-ii",u"-ri",u"ntcza",u"-ú ",u"-ia",u"-it.",u"-tt."],
+[u"iít",u"-rit",u"-fit",u"-vit",u"-írt",u"-iit",u"-iát",u"-ut",u"-i.t",u"-iít"],
 [u"téi",u"tér",u"tere",u"-té ",u"-tór"],
-[u"korut",u"korút",u"körut",u"körüt",u"könít",u"körrit ",u"körfit",u"körvit",u"körú",u"köriit",u"könit",u"kör-lít",u"kör- lít",u"krt"],
+[u"korut",u"korút",u"körut",u"körüt",u"könít",u"körrit ",u"-kö'út",u"körfit",u"körvit",u"körú",u"köriit",u"könit",u"kör-lít",u"kör- lít",u"krt"],
 [u"-koz"],
 [u"-sör"],
 [u"rakp",u"rak- part",u"rakn.",u"-rpt",u"rkp",u"ratp",u"-rp."],
@@ -59,6 +59,7 @@ print "number of lines in source text: ",len(lines)
 
 #kill "lonely" lines
 for i in range(len(lines)):
+	lines[i]=lines[i].split("\n")[0]
 	if i>0 and i<len(lines)-1:
 		#if lines[i-1]==u"\n" and lines[i+1]==u"\n":
 		if len(lines[i-1])<3 and len(lines[i+1])<3:			
@@ -83,6 +84,12 @@ lines=lines1
 
 rng=len(lines)
 for i in range(0,rng):
+	#preliminary cleaning
+	#getting rid of extra white spaces and enters
+	if i<len(lines)-2:
+		lines[i]=lines[i].split("\n")[0]	
+		lines[i]=lines[i].rstrip()
+		lines[i]=" ".join(lines[i].split())
 	#if line is cut at address
 	if i<len(lines)-2 and lines[i+1].split()[0] in spacestubs:
 		lines[i]=lines[i].split("\n")[0]+lines.pop(i+1)
@@ -96,8 +103,9 @@ assaddrs=[]
 
 lastline=""
 for i in range(len(lines)):
-	this=lines[i].split("\n")[0]
-	addrs=re.findall(ur"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\— ])+\.* *(\d)+([0-9\-\—])*)",this,flags=0)
+	
+	this=lines[i]
+	addrs=re.findall(ur"(([A-ZÁÉÍÓÖŐÜŰa-záéíóöőüú\-\—])+\.* *(\d)+([0-9\-\—])*)",this,flags=0)
 	addrs.reverse()
 	#print len(addrs)	
 	adrfound=0
@@ -136,19 +144,82 @@ for i in range(len(lines)):
 		adrpos=this.find(assaddrs[-1])
 		lastline=lastline+this[:adrpos]
 		mstr=mstr+[lastline]
+		#print unikill(kill_accents(mstr[-1]))
 		#print "assert: ",len(mstr),len(assaddrs)
 		lastline=""
 	else:
+		if len(lastline)>0 and lastline[-1] in [u"-",u"–",u"—",u"―"]:
+			lastline=lastline[:-1]
 		lastline=lastline+this
+
 	
 assert len(mstr)==len(assaddrs)
 print "parallel list length assertion ok"
+
+
+#REMAINING ADDRESSES: THIS IS STILL AN ISSUE, BUT THE PART BELOW DOES NOT SOLVE THE PROBLEM. 
+
+#NEW ITERATION OF ADDRESS FINDING TO SEE IF ANYTHING REMAINED
+# >>>INNEN VAN KIVEVE
+#newmstr=[]
+#newassaddr=[]
+#for i in range(len(mstr)):
+#	
+#	this=mstr[i]
+#	addrs=re.findall(ur"(([A-ZÁÉÍÓÖŐÜÚŰa-záéíóöőüűú\-\—'])+\.* *(\d)+([0-9\-\—])*)",this,flags=0)
+#	addrs.reverse()
+#	adrfound=0
+#	adrlistlen_prev=len(assaddrs)
+#	for j in range(len(addrs)):
+#		if type(addrs[j])==tuple:
+#			addrs[j]=addrs[j][0]
+#		if adrfound==0:
+#			if type(addrs[j])!=list:
+#				[ptype,pname]=check_if_place(" ".join(addrs[j].split()[:-1]))
+#				if ptype!=-1:		
+#						addr=addrs[j]
+#						adrfound=1
+#			else:
+#				for z in range(len(addrs[j])):
+#					[ptype,pname]=check_if_place(" ".join(addrs[j][z].split()[:-1]))
+#					if ptype!=-1 and adrfound!=1:		
+#						addr=addrs[j][z]
+#						adrfound=1
+#	if adrfound==1:
+		#print "cigan"
+#		
+
+#		adrpos=this.find(addr)
+#		firstpart=this[:adrpos]
+#		secondpart=this[adrpos+len(addr):].lstrip()
+#		newmstr=newmstr+[firstpart]
+#		newassaddr=newassaddr+[addr]
+#		newmstr=newmstr+[secondpart]
+#		newassaddr=newassaddr+[assaddrs[i]]
+
+#		print unikill(kill_accents(this))
+#		print unikill(kill_accents(firstpart))
+#		print unikill(kill_accents(secondpart))
+		#print unikill(kill_accents(mstr[-1]))
+		#print "assert: ",len(mstr),len(assaddrs)
+#		lastline=""
+#	else:
+#		newmstr=newmstr+[mstr[i]]
+#		newassaddr=newassaddr+[assaddrs[i]]
+
+#mstr=newmstr
+#assaddrs=newassaddr
+#assert len(mstr)==len(assaddrs)
+#print "second parallel list length assertion ok"
 
 mnames=[]
 nms=[]
 assnames=[]
 
-#FOLYTASD ITT: KI KELL IRNI A MASTER LISTA SORAIT
+
+outfilez=codecs.open("../out/master.txt",'w', encoding='utf-8', errors='replace')
+for x in range(len(mstr)):
+	outfilez.write(str(x)+", "+mstr[x]+"\n")
 
 for i in range(len(mstr)):
 	
@@ -162,21 +233,21 @@ for i in range(len(mstr)):
 
 	#szimplanevek 
 	names2=re.findall(u"([A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú]+ [A-ZÁÉÍÓÖŐÜŰ][a-záéíóöőüú]*)", mstr[i], flags=0)
-
+	#print len(names2)
 	names=["noname"]
 	if len(names1)>0 or len(names2)>0:
 		names=names1+names2
-		for y in range(len(names)):
-			print unikill(kill_accents(names[y]))
+		#for y in range(len(names)):
+			#print unikill(kill_accents(names[y]))
 
 
 	#If the association is in "Kossuth Lajos street", it will find "Kossuth Lajos" as a person participating, unless...
-	newnames=[]
-	for zz in range(len(addrs)):
-		for z in range(len(names)):
-			if names[z] not in addrs[zz]:
-				newnames=newnames+[names[z]]
-	names=newnames
+	#newnames=[]
+	#for zz in range(len(addrs)):
+	#	for z in range(len(names)):
+	#		if names[z] not in addrs[zz]:
+	#			newnames=newnames+[names[z]]
+	#names=newnames
 	#print len(names)	
 
 	#print names
@@ -200,16 +271,15 @@ for i in range(len(mstr)):
 outfile=codecs.open("../out/out.txt",'w', encoding='utf-8', errors='replace')
 outfilex=codecs.open("../out/assadrs.txt",'w', encoding='utf-8', errors='replace')
 outfiley=codecs.open("../out/assnames.txt",'w', encoding='utf-8', errors='replace')
-outfilez=codecs.open("../out/master.txt",'w', encoding='utf-8', errors='replace')
+
 for x in range(len(assaddrs)):
 	outfilex.write(assaddrs[x]+"\n")
 for x in range(len(assnames)):
 	outfiley.write(assnames[x]+"\n")
-for x in range(len(mstr)):
-	outfilez.write(mstr[x]+"\n")
 
 
-outfile2=codecs.open("../out/business_csv_master.txt",'w', encoding='utf-8', errors='replace')
+
+outfile2=codecs.open("../out/small_business_csv_master.txt",'w', encoding='utf-8', errors='replace')
 outfile2.write("associd,assocname,assocaddr,fullname,nkey1,nkey2,jap1,jap2\n")
 
 
@@ -229,7 +299,16 @@ for i in range(len(nms)):
 			#print jap2[-1]
 			#assert japanize(z)[-1]!="y"
 		
+		if len(lwrcase)<2: 
+			lwrcase=lwrcase+[""]
+		if len(jap2)<2:
+			jap2=jap2+[""]
+
+		assert len(lwrcase)==2
+		assert len(jap2)==2
+
 		person=",".join([str(i), assnames[i], assaddrs[i], mnames[i][j]]+lwrcase[0:2]+jap2[0:2])+"\n"
+		person="".join(person.split('"'))
 		outfile2.write(person.encode("utf-8").decode("utf-8"))
 
 for i in range(len(mstr)):

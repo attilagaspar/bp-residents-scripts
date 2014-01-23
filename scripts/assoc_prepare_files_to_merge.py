@@ -19,7 +19,7 @@ from process_basics import *
 from process_geo import *
 
 
-srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_cegek.txt"
+srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_egyesuletek.txt"
 
 srcfile = codecs.open(srcfilename,'r', encoding='utf-8', errors='replace')
 
@@ -224,7 +224,7 @@ for i in range(len(masterlist)):
 
 		#association name goes till the address
 		assn=mstr[i][:adpos]
-		print japanize(assn)
+		#print japanize(assn)
 	else:
 		assn=re.findall(u"^[^,.]+",mstr[i],flags=0)[0][:-1]
 	#print assn.encode("utf-8")
@@ -249,7 +249,7 @@ for x in range(len(mstr)):
 	outfilez.write(mstr[x]+"\n")
 
 
-outfile2=codecs.open("../out/business_csv_master.txt",'w', encoding='utf-8', errors='replace')
+outfile2=codecs.open("../out/assoc_csv_master.txt",'w', encoding='utf-8', errors='replace')
 outfile2.write("associd,assocname,assocaddr,fullname,nkey1,nkey2,jap1,jap2\n")
 outfile3=codecs.open("../out/assoc_csv_using.txt",'w', encoding='utf-8', errors='replace')
 outfile3.write("person,personname,nkey1,nkey2,jap1,jap2,ad1,ad2,ad3,ad4\n")
@@ -269,8 +269,17 @@ for i in range(len(nms)):
 			jap2=jap2+[japanize(z)]
 			#print jap2[-1]
 			#assert japanize(z)[-1]!="y"
+
+		if len(lwrcase)<2: 
+			lwrcase=lwrcase+[""]
+		if len(jap2)<2:
+			jap2=jap2+[""]
+
+		assert len(lwrcase)==2
+		assert len(jap2)==2
 		
 		person=",".join([str(i), assnames[i], assaddrs[i], mnames[i][j]]+lwrcase[0:2]+jap2[0:2])+"\n"
+		person="".join(person.split('"'))
 		outfile2.write(person.encode("utf-8").decode("utf-8"))
 
 for i in range(len(masterlist)):
@@ -293,18 +302,30 @@ for namelines in namesrc:
 	nkjap=[]
 	for z in nl[1].split():
 		nkjap=nkjap+[japanize(z)]
+	
+
 	try:
-		nkeys[0]=nk[0]
-		nkeys[1]=nk[1]
+		nk=nk[0:2]
+		nkjap=nkjap[0:2]
 	except:
 		pass
 
+	while len(nk)<2: 
+		nk=nk+[""]
+	while len(nkjap)<2:
+		nkjap=nkjap+[""]
+
+
+	assert len(nk)==2
+	assert len(nkjap)==2
 	
 	nlint = [nl[0]]+[nl[1]]+nk[0:2]+nkjap[0:2]+nl[11:15]
 	#if japanize(nlint[1]) in allnames:
 	#	dest_people=dest_people+[nlint]
 	#dest_people=dest_people+[nlint]
-	outfile3.write(",".join(nlint)+"\n")
+	outline=",".join(nlint)+"\n"
+	outline="".join(outline.split(u'"'))
+	outfile3.write(outline)
 
 
 print "using data ready"

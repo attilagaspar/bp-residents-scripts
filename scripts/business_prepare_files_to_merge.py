@@ -19,7 +19,7 @@ from process_basics import *
 from process_geo import *
 
 
-srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_cegek_kicsi.txt"
+srcfilename="../in/BPLAKCIMJEGYZEK_09_1896-1897_cegek.txt"
 
 srcfile = codecs.open(srcfilename,'r', encoding='utf-8', errors='replace')
 
@@ -276,7 +276,17 @@ for i in range(len(nms)):
 			#print jap2[-1]
 			#assert japanize(z)[-1]!="y"
 		
+		if len(lwrcase)<2: 
+			lwrcase=lwrcase+[""]
+		if len(jap2)<2:
+			jap2=jap2+[""]
+
+		assert len(lwrcase)==2
+		assert len(jap2)==2
+
+
 		person=",".join([str(i), assnames[i], assaddrs[i], mnames[i][j]]+lwrcase[0:2]+jap2[0:2])+"\n"
+		person="".join(person.split('"'))
 		outfile2.write(person.encode("utf-8").decode("utf-8"))
 
 for i in range(len(masterlist)):
